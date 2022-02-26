@@ -1,9 +1,8 @@
-﻿  main.cpp
-LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
+﻿LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
-  1 of 86 functions ( 1.2%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+  16 of 214 functions ( 7.5%) were compiled, the rest were copied from previous compilation.
+    5 functions were new in current compilation
+    33 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
 glew32s.lib(glew.obj) : warning LNK4099: PDB 'vc120.pdb' was not found with 'glew32s.lib(glew.obj)' or at 'C:\Users\devon\VisualStudio\solution_game\x64\Release\vc120.pdb'; linking object as if no debug info
   project_opengsl.vcxproj -> C:\Users\devon\VisualStudio\solution_game\x64\Release\project_opengsl.exe

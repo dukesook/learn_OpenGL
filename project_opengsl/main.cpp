@@ -1,50 +1,47 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-/*
-
-libaraies
-    All libraries has 2 essential parts
-    1. An 'include' folder the contains all the .h files
-    2. A 'lib' folder that contains .lib files.
-
-glew 
-    openGL Extension Wrangler. 
-     - We need a way to call the opengl functions. 
-     - Rembember their implementations are define on your graphics card 
-     - glew returns function pointers from your GPU 
-    Download: http://glew.sourceforge.net/index.html
-     - I used the binary version as opposed to the source code
-     - I stored in here: C:\Users\devon\VisualStudio\solution_game\Dependencies\glew-2.1.0
-    Documentation: http://glew.sourceforge.net/basic.html
-    VS Properties Page
-     - C/C++  -> General -> Additional Include Directores  -> $(SolutionDir)Dependencies\glew-2.1.0\include\GL
-     - Linker -> General -> Additional Library Directories -> $(SolutionDir)Dependencies\glew-2.1.0\lib\Release\x64
-     - Linker -> Input   -> Additional Dependencies -> glew32s.lib
-     - C/C++  -> Preprocessor -> Preprocessor Definitions -> GLEW_STATIC
-    Gochas
-     - call glewInit() AFTER glfwMakeContextCurrent(window);
-     - #include <GL/glew.h> BEFORE #include <GLFW/glfw3.h>
-
-Vertex
-    Array of bytes in memory, just of buffer
-    stored in the GPU
-Shader
-    Program that runs on the GPU and draws images
-    Vertex Shader - gets called for each vertex, position, called first
-    Fragment Shader - aka Pixel Shaders, called after vertex shader. Runs for each pixel which makes operations expensive. Decides which COLOR each pixel should be.
-
-To render an image, you select 1 Vertex & 1 shader 
-
-*/
+#include <fstream> //file stream, 
+#include <string>
+#include <sstream>
 
 
-/* 
-VISUAL STUDIO HOT KEYS
- - ctr + D  Duplicate a line
- - ctr + C  Copy entire line (when nothing is selected)
- - ctr + X  Cut entire line
-*/
+
+struct ShaderProgramSource {
+    std::string VertexSource;
+    std::string FragmentSource;
+};
+
+static struct ShaderProgramSource ParseShader(const std::string& filepath) {
+    
+    std::ifstream stream(filepath);
+
+    enum class ShaderType {
+        NONE = -1,
+        VERTEX = 0,
+        FRAGMENT = 1
+    };
+    ShaderType type = ShaderType::NONE;
+
+    std::string line;
+    std::stringstream ss[2];
+
+    while (getline(stream, line)) 
+    {
+        if (line.find("#shader") != std::string::npos) 
+        {
+            if (line.find("vertex") != std::string::npos) 
+                type = ShaderType::VERTEX;
+            else if (line.find("fragment") != std::string::npos)
+                type = ShaderType::FRAGMENT;
+        }
+        else 
+        {
+            ss[(int)type] << line << '\n';
+        }
+    }
+    return { ss[0].str(), ss[1].str() };
+}
 
 static void drawTriangle() {
     //Draw a triangle using legacy opengl
@@ -139,25 +136,11 @@ int main(void)
         //arg5: stride: number of bytes for each vertex
         //arg6: wtf
 
+    ShaderProgramSource source = ParseShader("Basic.shader");
 
-    std::string vertexShader =
-        "#version 330 core\n"
-        "\n"
-        "layout(location = 0) in vec4 position;\n"
-        "void main() {\n"
-        "   gl_Position = position;\n"
-        "}\n";
-    
-    std::string fragmentShader =
-        "#version 330 core\n"
-        "\n"
-        "layout(location = 0) out vec4 color;\n"
-        "void main() {\n"
-        "   color = vec4(1.0, 0.0, 0.0, 1.0);\n"
-        "}\n";
-
-    unsigned int shader = createShader(vertexShader, fragmentShader);
+    unsigned int shader = createShader(source.VertexSource, source.FragmentSource);
     glUseProgram(shader);
+
 
     //GAME LOOP
     while (!glfwWindowShouldClose(window)) {
@@ -180,3 +163,52 @@ int main(void)
     glfwTerminate();
     return 0;
 }
+
+
+/*
+
+libaraies
+    All libraries has 2 essential parts
+    1. An 'include' folder the contains all the .h files
+    2. A 'lib' folder that contains .lib files.
+
+glew
+    openGL Extension Wrangler.
+     - We need a way to call the opengl functions.
+     - Rembember their implementations are define on your graphics card
+     - glew returns function pointers from your GPU
+    Download: http://glew.sourceforge.net/index.html
+     - I used the binary version as opposed to the source code
+     - I stored in here: C:\Users\devon\VisualStudio\solution_game\Dependencies\glew-2.1.0
+    Documentation: http://glew.sourceforge.net/basic.html
+    VS Properties Page
+     - C/C++  -> General -> Additional Include Directores  -> $(SolutionDir)Dependencies\glew-2.1.0\include\GL
+     - Linker -> General -> Additional Library Directories -> $(SolutionDir)Dependencies\glew-2.1.0\lib\Release\x64
+     - Linker -> Input   -> Additional Dependencies -> glew32s.lib
+     - C/C++  -> Preprocessor -> Preprocessor Definitions -> GLEW_STATIC
+    Gochas
+     - call glewInit() AFTER glfwMakeContextCurrent(window);
+     - #include <GL/glew.h> BEFORE #include <GLFW/glfw3.h>
+
+Vertex
+    Array of bytes in memory, just of buffer
+    stored in the GPU
+Shader
+    Program that runs on the GPU and draws images
+    Vertex Shader - gets called for each vertex, position, called first
+    Fragment Shader - aka Pixel Shaders, called after vertex shader. Runs for each pixel which makes operations expensive. Decides which COLOR each pixel should be.
+
+To render an image, you select 1 Vertex & 1 shader
+
+*/
+
+
+/*
+VISUAL STUDIO HOT KEYS
+ - ctr + D  Duplicate a line
+ - ctr + C  Copy entire line (when nothing is selected)
+ - ctr + X  Cut entire line
+ - ctr + H  Find and replace
+ - alt + up/down            move line of code
+ - alt + shift + up/down    multiple cursors
+*/
