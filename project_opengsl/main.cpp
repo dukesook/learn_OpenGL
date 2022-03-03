@@ -121,11 +121,20 @@ int main(void)
 
     //VERTEX
     unsigned int buffer; 
-    float positions[6] = { -0.5f, -0.5f, 0.0f,  0.5f, 0.5f, -0.5f };
+    float positions[] = { 
+        -0.5f, -0.5f, 
+         0.5f, -0.5f, 
+         0.5f,  0.5f,        
+         
+        -0.5f, -0.5f, 
+        -0.5f, 0.5f, 
+         0.5f,  0.5f
+    };
     glGenBuffers(1, &buffer); //arg1: how many buffers would you like?
     glBindBuffer(GL_ARRAY_BUFFER, buffer); //arg1: defines the purpose, or how buffer will be used. The currently bound buffer is considered to be the "selected" buffer
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
-
+    glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), positions, GL_STATIC_DRAW);
+                                //6 vertices * 2 triangle
+                                // 
     //TELL OPENGL OUR LAYOUT
     glEnableVertexAttribArray(0); //arg1: the index that you want to enable. Enables the selected buffer
     glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(float) * 2, 0);
@@ -148,7 +157,7 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
 
-        glDrawArrays(GL_TRIANGLES, 0, 3); //use this function when you DON'T have an index buffer. arg1: type. arg2: starting index. arg3: vertex count (2 coordinate = 1 vertex);
+        glDrawArrays(GL_TRIANGLES, 0, 6); //use this function when you DON'T have an index buffer. arg1: type. arg2: starting index. arg3: vertex count (2 coordinate = 1 vertex);
 
 
         /* Swap front and back buffers */
