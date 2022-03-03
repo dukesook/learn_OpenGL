@@ -120,16 +120,27 @@ int main(void)
     std::cout << glGetString(GL_VERSION) << std::endl; //4.6.0 - Build 27.20.100.9621
 
     //VERTEX
-    unsigned int buffer; 
+    //float positions[] = { 
+    //    -0.5f, -0.5f, 
+    //     0.5f, -0.5f, 
+    //     0.5f,  0.5f,        
+    //     
+    //    -0.5f, -0.5f, 
+    //    -0.5f, 0.5f, 
+    //     0.5f,  0.5f
+    //};   
     float positions[] = { 
-        -0.5f, -0.5f, 
-         0.5f, -0.5f, 
-         0.5f,  0.5f,        
-         
-        -0.5f, -0.5f, 
-        -0.5f, 0.5f, 
-         0.5f,  0.5f
+        -0.5f, -0.5f, //0
+         0.5f, -0.5f, //1
+         0.5f,  0.5f, //2
+        -0.5f, 0.5f   //3
     };
+
+    unsigned int indices[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+    unsigned int buffer;
     glGenBuffers(1, &buffer); //arg1: how many buffers would you like?
     glBindBuffer(GL_ARRAY_BUFFER, buffer); //arg1: defines the purpose, or how buffer will be used. The currently bound buffer is considered to be the "selected" buffer
     glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), positions, GL_STATIC_DRAW);
@@ -145,6 +156,14 @@ int main(void)
         //arg5: stride: number of bytes for each vertex
         //arg6: wtf
 
+    unsigned int ibo;
+    glGenBuffers(1, &ibo); //arg1: how many buffers would you like?
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo); //arg1: defines the purpose, or how buffer will be used. The currently bound buffer is considered to be the "selected" buffer
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+    //6 vertices * 2 triangle
+
+
+
     ShaderProgramSource source = ParseShader("Basic.shader");
 
     unsigned int shader = createShader(source.VertexSource, source.FragmentSource);
@@ -157,8 +176,8 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
 
-        glDrawArrays(GL_TRIANGLES, 0, 6); //use this function when you DON'T have an index buffer. arg1: type. arg2: starting index. arg3: vertex count (2 coordinate = 1 vertex);
-
+        //glDrawArrays(GL_TRIANGLES, 0, 6); //use this function when you DON'T have an index buffer. arg1: type. arg2: starting index. arg3: vertex count (2 coordinate = 1 vertex);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
