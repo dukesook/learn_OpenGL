@@ -119,21 +119,12 @@ int main(void)
 
     std::cout << glGetString(GL_VERSION) << std::endl; //4.6.0 - Build 27.20.100.9621
 
-    //VERTEX
-    //float positions[] = { 
-    //    -0.5f, -0.5f, 
-    //     0.5f, -0.5f, 
-    //     0.5f,  0.5f,        
-    //     
-    //    -0.5f, -0.5f, 
-    //    -0.5f, 0.5f, 
-    //     0.5f,  0.5f
-    //};   
+    //VERTEX  
     float positions[] = { 
         -0.5f, -0.5f, //0
          0.5f, -0.5f, //1
          0.5f,  0.5f, //2
-        -0.5f, 0.5f   //3
+        -0.5f,  0.5f   //3
     };
 
     unsigned int indices[] = {
@@ -141,32 +132,31 @@ int main(void)
         2, 3, 0
     };
     unsigned int buffer;
-    glGenBuffers(1, &buffer); //arg1: how many buffers would you like?
+    unsigned bufferCount = 1;
+    unsigned int positionsVertexCount = 4;
+    unsigned numbersPerVertex = 2;
+    unsigned int positionsSize = positionsVertexCount * numbersPerVertex * sizeof(float);
+    glGenBuffers(bufferCount, &buffer); //arg1: Number of buffers to generate. arg2: Location where buffers will be stored
     glBindBuffer(GL_ARRAY_BUFFER, buffer); //arg1: defines the purpose, or how buffer will be used. The currently bound buffer is considered to be the "selected" buffer
-    glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), positions, GL_STATIC_DRAW);
-                                //6 vertices * 2 triangle
-                                // 
+    glBufferData(GL_ARRAY_BUFFER, positionsSize, positions, GL_STATIC_DRAW); //links a buffer to its data
+
     //TELL OPENGL OUR LAYOUT
-    glEnableVertexAttribArray(0); //arg1: the index that you want to enable. Enables the selected buffer
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(float) * 2, 0);
-        //arg1: starting index
-        //arg2: how many numbers are in 1 vertex
-        //arg3: type of data
-        //arg4: true = normalized (0 < x < 1), false = scalar (0 < x < 255)
-        //arg5: stride: number of bytes for each vertex
-        //arg6: wtf
+    int startingIndex = 0;
+    bool normalized = false;
+    int stride = sizeof(float) * numbersPerVertex;
+    glEnableVertexAttribArray(0); //Enables the selected buffer. arg1: the index that you want to enable.
+    glVertexAttribPointer(startingIndex, numbersPerVertex, GL_FLOAT, normalized, stride, 0); //defines an array of generic vertex attribute data //arg1: starting index. arg2: how many numbers are in 1 vertex. arg3: type of data. arg4: true = normalized (0 < x < 1), false = scalar (0 < x < 255). arg5: stride: number of bytes for each vertex. arg6: wtf
 
     unsigned int ibo;
-    glGenBuffers(1, &ibo); //arg1: how many buffers would you like?
+    unsigned int indicesVertexCount = 6;
+    unsigned int indicesSize = indicesVertexCount * sizeof(unsigned int);
+    glGenBuffers(bufferCount, &ibo); //arg1: how many buffers would you like?
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo); //arg1: defines the purpose, or how buffer will be used. The currently bound buffer is considered to be the "selected" buffer
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
-    //6 vertices * 2 triangle
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize, indices, GL_STATIC_DRAW); //links a buffer to its data
 
-
-
+    //SHADERS
     ShaderProgramSource source = ParseShader("Basic.shader");
-
-    unsigned int shader = createShader(source.VertexSource, source.FragmentSource);
+    unsigned int shader = createShader(source.VertexSource, source.FragmentSource); //Vertex Shaders: ???? Fragment Shaders: Tell opengl which color to use
     glUseProgram(shader);
 
 
@@ -177,7 +167,7 @@ int main(void)
 
 
         //glDrawArrays(GL_TRIANGLES, 0, 6); //use this function when you DON'T have an index buffer. arg1: type. arg2: starting index. arg3: vertex count (2 coordinate = 1 vertex);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, indicesVertexCount, GL_UNSIGNED_INT, nullptr);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
