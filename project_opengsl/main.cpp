@@ -5,13 +5,14 @@
 #include <string>
 #include <sstream>
 
-
-
+#define ASSERT(x) if (!(x)) __debugbreak();
+#define GLCall(x) GLClearError();\
+    x;\
+    ASSERT(GLLogCall(#x, __FILE__, __LINE__))
 struct ShaderProgramSource {
     std::string VertexSource;
     std::string FragmentSource;
 };
-
 static struct ShaderProgramSource ParseShader(const std::string& filepath) {
     
     std::ifstream stream(filepath);
@@ -43,6 +44,21 @@ static struct ShaderProgramSource ParseShader(const std::string& filepath) {
     return { ss[0].str(), ss[1].str() };
 }
 
+static void GLClearError() {
+    while (glGetError() != GL_NO_ERROR) {
+        //keep getting errors
+    }
+}
+static bool GLLogCall(const char* function, const char* file, unsigned int line) {
+    while (GLenum error = glGetError()) {
+        std::cout << "[OpenGL Error] (" << error << ")" << std::endl;
+        std::cout << "\tfunction: " << function << std::endl;
+        std::cout << "\tfile:     " << file << std::endl;
+        std::cout << "\tline:     " << line << std::endl;
+        return false;
+    }
+    return true;
+}
 static void drawTriangle() {
     //Draw a triangle using legacy opengl
     //Place inside game loop
@@ -53,7 +69,6 @@ static void drawTriangle() {
     glVertex2f( 0.5f, -0.5f);
     glEnd();
 }
-
 static unsigned int compileShader(unsigned int type, const std::string source) {
     unsigned int id = glCreateShader(type);
     const char* src = source.c_str();
@@ -136,49 +151,49 @@ int main(void)
     unsigned int positionsVertexCount = 4;
     unsigned numbersPerVertex = 2;
     unsigned int positionsSize = positionsVertexCount * numbersPerVertex * sizeof(float);
-    glGenBuffers(bufferCount, &buffer); //arg1: Number of buffers to generate. arg2: Location where buffers will be stored
-    glBindBuffer(GL_ARRAY_BUFFER, buffer); //arg1: defines the purpose, or how buffer will be used. The currently bound buffer is considered to be the "selected" buffer
-    glBufferData(GL_ARRAY_BUFFER, positionsSize, positions, GL_STATIC_DRAW); //links a buffer to its data
+    GLCall(glGenBuffers(bufferCount, &buffer)); //arg1: Number of buffers to generate. arg2: Location where buffers will be stored
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer)); //arg1: defines the purpose, or how buffer will be used. The currently bound buffer is considered to be the "selected" buffer
+    GLCall(glBufferData(GL_ARRAY_BUFFER, positionsSize, positions, GL_STATIC_DRAW)); //links a buffer to its data
 
     //TELL OPENGL OUR LAYOUT
     int startingIndex = 0;
     bool normalized = false;
     int stride = sizeof(float) * numbersPerVertex;
-    glEnableVertexAttribArray(0); //Enables the selected buffer. arg1: the index that you want to enable.
-    glVertexAttribPointer(startingIndex, numbersPerVertex, GL_FLOAT, normalized, stride, 0); //defines an array of generic vertex attribute data //arg1: starting index. arg2: how many numbers are in 1 vertex. arg3: type of data. arg4: true = normalized (0 < x < 1), false = scalar (0 < x < 255). arg5: stride: number of bytes for each vertex. arg6: wtf
+    GLCall(glEnableVertexAttribArray(0)); //Enables the selected buffer. arg1: the index that you want to enable.
+    GLCall(glVertexAttribPointer(startingIndex, numbersPerVertex, GL_FLOAT, normalized, stride, 0)); //defines an array of generic vertex attribute data //arg1: starting index. arg2: how many numbers are in 1 vertex. arg3: type of data. arg4: true = normalized (0 < x < 1), false = scalar (0 < x < 255). arg5: stride: number of bytes for each vertex. arg6: wtf
 
     unsigned int ibo;
     unsigned int indicesVertexCount = 6;
     unsigned int indicesSize = indicesVertexCount * sizeof(unsigned int);
-    glGenBuffers(bufferCount, &ibo); //arg1: how many buffers would you like?
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo); //arg1: defines the purpose, or how buffer will be used. The currently bound buffer is considered to be the "selected" buffer
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize, indices, GL_STATIC_DRAW); //links a buffer to its data
+    GLCall(glGenBuffers(bufferCount, &ibo)); //arg1: how many buffers would you like?
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo)); //arg1: defines the purpose, or how buffer will be used. The currently bound buffer is considered to be the "selected" buffer
+    GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesSize, indices, GL_STATIC_DRAW)); //links a buffer to its data
 
     //SHADERS
     ShaderProgramSource source = ParseShader("Basic.shader");
     unsigned int shader = createShader(source.VertexSource, source.FragmentSource); //Vertex Shaders: ???? Fragment Shaders: Tell opengl which color to use
-    glUseProgram(shader);
+    GLCall(glUseProgram(shader));
 
 
     //GAME LOOP
     while (!glfwWindowShouldClose(window)) {
         /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
 
         //glDrawArrays(GL_TRIANGLES, 0, 6); //use this function when you DON'T have an index buffer. arg1: type. arg2: starting index. arg3: vertex count (2 coordinate = 1 vertex);
-        glDrawElements(GL_TRIANGLES, indicesVertexCount, GL_UNSIGNED_INT, nullptr);
+        GLCall(glDrawElements(GL_TRIANGLES, indicesVertexCount, GL_UNSIGNED_INT, nullptr));
 
         /* Swap front and back buffers */
-        glfwSwapBuffers(window);
+        GLCall(glfwSwapBuffers(window));
 
         /* Poll for and process events */
-        glfwPollEvents();
+        GLCall(glfwPollEvents());
     }
 
-    glDeleteProgram(shader);
+    GLCall(glDeleteProgram(shader));
 
-    glfwTerminate();
+    GLCall(glfwTerminate());
     return 0;
 }
 
