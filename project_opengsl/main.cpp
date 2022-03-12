@@ -128,6 +128,8 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    glfwSwapInterval(1); //synchornizes with monitor refresh rate
+
     if (glewInit() != GLEW_OK) {
         std::cout << "glewInit() Error" << std::endl;
     }
@@ -172,17 +174,32 @@ int main(void)
     //SHADERS
     ShaderProgramSource source = ParseShader("Basic.shader");
     unsigned int shader = createShader(source.VertexSource, source.FragmentSource); //Vertex Shaders: ???? Fragment Shaders: Tell opengl which color to use
-    GLCall(glUseProgram(shader));
+    GLCall(glUseProgram(shader)); //"binding the shader"
 
+    //UNIFORM
+    GLCall(int location = glGetUniformLocation(shader, "u_Color")); //getting the location of the "u_Color" variable located in the shader
+    ASSERT(location != -1);
+    GLCall(glUniform4f(location, 0.8f, 0.3f, 0.8f, 1.0f)); //Set the data in the shader. 4f = 4 floats in a vertex
+
+    float red = 0.0f;
+    float increment = 0.05f;
 
     //GAME LOOP
     while (!glfwWindowShouldClose(window)) {
         /* Render here */
         GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
-
+        GLCall(glUniform4f(location, red, 0.3f, 0.8f, 1.0f)); //Set the data in the shader. 4f = 4 floats in a vertex
         //glDrawArrays(GL_TRIANGLES, 0, 6); //use this function when you DON'T have an index buffer. arg1: type. arg2: starting index. arg3: vertex count (2 coordinate = 1 vertex);
         GLCall(glDrawElements(GL_TRIANGLES, indicesVertexCount, GL_UNSIGNED_INT, nullptr));
+
+        if (red > 1.0f) {
+            increment = -0.05f;
+        } else if (red < 0.0f) {
+            increment = 0.05f;
+        }
+
+        red += increment;
 
         /* Swap front and back buffers */
         GLCall(glfwSwapBuffers(window));
@@ -193,7 +210,7 @@ int main(void)
 
     GLCall(glDeleteProgram(shader));
 
-    GLCall(glfwTerminate());
+    glfwTerminate();
     return 0;
 }
 
@@ -230,8 +247,14 @@ Shader
     Program that runs on the GPU and draws images
     Vertex Shader - gets called for each vertex, position, called first
     Fragment Shader - aka Pixel Shaders, called after vertex shader. Runs for each pixel which makes operations expensive. Decides which COLOR each pixel should be.
+    To render an image, you select 1 Vertex & 1 shader
+Uniforms & Attributes - The Cherno #11
+    Both send data to the GPU
+    Uniforms
+        Set per draw
+    Attributes
+        Set per vertex
 
-To render an image, you select 1 Vertex & 1 shader
 
 */
 

@@ -156,6 +156,9 @@
   <ItemGroup>
     <None Include="Basic.shader" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Dependencies\glew-2.1.0\include\GL\glew.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
