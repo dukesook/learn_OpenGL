@@ -9,6 +9,9 @@
 #define GLCall(x) GLClearError();\
     x;\
     ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+
+
+//SHADERS
 struct ShaderProgramSource {
     std::string VertexSource;
     std::string FragmentSource;
@@ -43,32 +46,6 @@ static struct ShaderProgramSource ParseShader(const std::string& filepath) {
     }
     return { ss[0].str(), ss[1].str() };
 }
-
-static void GLClearError() {
-    while (glGetError() != GL_NO_ERROR) {
-        //keep getting errors
-    }
-}
-static bool GLLogCall(const char* function, const char* file, unsigned int line) {
-    while (GLenum error = glGetError()) {
-        std::cout << "[OpenGL Error] (" << error << ")" << std::endl;
-        std::cout << "\tfunction: " << function << std::endl;
-        std::cout << "\tfile:     " << file << std::endl;
-        std::cout << "\tline:     " << line << std::endl;
-        return false;
-    }
-    return true;
-}
-static void drawTriangle() {
-    //Draw a triangle using legacy opengl
-    //Place inside game loop
-    //typically, you want to use modern opengl
-    glBegin(GL_TRIANGLES);
-    glVertex2f(-0.5f, -0.5f);
-    glVertex2f( 0.0f,  0.5f);
-    glVertex2f( 0.5f, -0.5f);
-    glEnd();
-}
 static unsigned int compileShader(unsigned int type, const std::string source) {
     unsigned int id = glCreateShader(type);
     const char* src = source.c_str();
@@ -77,7 +54,7 @@ static unsigned int compileShader(unsigned int type, const std::string source) {
 
     //Error Handling
     int result;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &result) ;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
     if (result == GL_FALSE) { //error
         int length;
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
@@ -94,7 +71,7 @@ static unsigned int compileShader(unsigned int type, const std::string source) {
 
 }
 static unsigned int createShader(const std::string& vertexShader, const std::string& fragmentShader) {
-    
+
     unsigned int program_id = glCreateProgram();
     unsigned int vs = compileShader(GL_VERTEX_SHADER, vertexShader);
     unsigned int fs = compileShader(GL_FRAGMENT_SHADER, fragmentShader);
@@ -105,9 +82,41 @@ static unsigned int createShader(const std::string& vertexShader, const std::str
 
     glDeleteShader(vs);
     glDeleteShader(fs);
-    
+
     return program_id;
 }
+
+//DEBUGGING
+static void GLClearError() {
+    while (glGetError() != GL_NO_ERROR) {
+        //keep getting errors
+    }
+}
+static bool GLLogCall(const char* function, const char* file, unsigned int line) {
+    while (GLenum error = glGetError()) {
+        std::cout << "[OpenGL Error] (" << error << ")" << std::endl;
+        std::cout << "\tfunction: " << function << std::endl;
+        std::cout << "\tfile:     " << file << std::endl;
+        std::cout << "\tline:     " << line << std::endl;
+        return false;
+    }
+    return true;
+}
+
+static void drawTriangle() {
+    //Draw a triangle using legacy opengl
+    //Place inside game loop
+    //typically, you want to use modern opengl
+    glBegin(GL_TRIANGLES);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f( 0.0f,  0.5f);
+    glVertex2f( 0.5f, -0.5f);
+    glEnd();
+
+    //glDrawArrays(GL_TRIANGLES, 0, 6); //use this function when you DON'T have an index buffer. arg1: type. arg2: starting index. arg3: vertex count (2 coordinate = 1 vertex);
+
+}
+
 
 int main(void)
 {
@@ -117,6 +126,12 @@ int main(void)
     if (!glfwInit()) {
         return -1;
     }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); //sets version to 3.x
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); //sets version to x.3
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE); //Set to Compatibility - creates Vertex Arraysby default
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //Set to core - DOESN'T create Vertex Arrays by default. Now you must bind a vertex array object prior to calling glEnableVertexAttribArray()
+    
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
@@ -141,13 +156,19 @@ int main(void)
         -0.5f, -0.5f, //0
          0.5f, -0.5f, //1
          0.5f,  0.5f, //2
-        -0.5f,  0.5f   //3
+        -0.5f,  0.5f  //3
     };
 
     unsigned int indices[] = {
-        0, 1, 2,
-        2, 3, 0
+        0, 1, 2, //triangle #1
+        2, 3, 0  //triangle #2
     };
+
+    unsigned int vao; //Vertex Array Object
+    GLCall(glGenVertexArrays(1, &vao)); //Generate Vertex Array
+    GLCall(glBindVertexArray(vao));     //Bind Vertex Array
+
+    //VERTEX BUFFER - used to specify triangle coordinates
     unsigned int buffer;
     unsigned bufferCount = 1;
     unsigned int positionsVertexCount = 4;
@@ -155,7 +176,7 @@ int main(void)
     unsigned int positionsSize = positionsVertexCount * numbersPerVertex * sizeof(float);
     GLCall(glGenBuffers(bufferCount, &buffer)); //arg1: Number of buffers to generate. arg2: Location where buffers will be stored
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer)); //arg1: defines the purpose, or how buffer will be used. The currently bound buffer is considered to be the "selected" buffer
-    GLCall(glBufferData(GL_ARRAY_BUFFER, positionsSize, positions, GL_STATIC_DRAW)); //links a buffer to its data
+    GLCall(glBufferData(GL_ARRAY_BUFFER, positionsSize, positions, GL_STATIC_DRAW)); //links data(positions[]) to the currently bound buffer
 
     //TELL OPENGL OUR LAYOUT
     int startingIndex = 0;
@@ -164,7 +185,8 @@ int main(void)
     GLCall(glEnableVertexAttribArray(0)); //Enables the selected buffer. arg1: the index that you want to enable.
     GLCall(glVertexAttribPointer(startingIndex, numbersPerVertex, GL_FLOAT, normalized, stride, 0)); //defines an array of generic vertex attribute data //arg1: starting index. arg2: how many numbers are in 1 vertex. arg3: type of data. arg4: true = normalized (0 < x < 1), false = scalar (0 < x < 255). arg5: stride: number of bytes for each vertex. arg6: wtf
 
-    unsigned int ibo;
+    //INDEX BUFFER - used to index into our vertex buffer
+    unsigned int ibo; //index buffer ojbect
     unsigned int indicesVertexCount = 6;
     unsigned int indicesSize = indicesVertexCount * sizeof(unsigned int);
     GLCall(glGenBuffers(bufferCount, &ibo)); //arg1: how many buffers would you like?
@@ -181,6 +203,12 @@ int main(void)
     ASSERT(location != -1);
     GLCall(glUniform4f(location, 0.8f, 0.3f, 0.8f, 1.0f)); //Set the data in the shader. 4f = 4 floats in a vertex
 
+    //UNBIND ALL (just for practice)
+    GLCall(glBindVertexArray(0));
+    GLCall(glUseProgram(0));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)); 
+
     float red = 0.0f;
     float increment = 0.05f;
 
@@ -189,8 +217,20 @@ int main(void)
         /* Render here */
         GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
+        //RE-BIND
+        GLCall(glUseProgram(shader));
         GLCall(glUniform4f(location, red, 0.3f, 0.8f, 1.0f)); //Set the data in the shader. 4f = 4 floats in a vertex
-        //glDrawArrays(GL_TRIANGLES, 0, 6); //use this function when you DON'T have an index buffer. arg1: type. arg2: starting index. arg3: vertex count (2 coordinate = 1 vertex);
+
+        //Code is replaced by Vertex Array
+        GLCall(glBindVertexArray(vao)); //notice, you are not binding your vertex buffer.
+        GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo)); 
+        //GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer));
+        //GLCall(glEnableVertexAttribArray(0)); //Enables the selected buffer. arg1: the index that you want to enable.
+        //GLCall(glVertexAttribPointer(startingIndex, numbersPerVertex, GL_FLOAT, normalized, stride, 0)); //defines an array of generic vertex attribute data //arg1: starting index. arg2: how many numbers are in 1 vertex. arg3: type of data. arg4: true = normalized (0 < x < 1), false = scalar (0 < x < 255). arg5: stride: number of bytes for each vertex. arg6: wtf
+        
+        GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+
+        //DRAW
         GLCall(glDrawElements(GL_TRIANGLES, indicesVertexCount, GL_UNSIGNED_INT, nullptr));
 
         if (red > 1.0f) {
@@ -251,9 +291,16 @@ Shader
 Uniforms & Attributes - The Cherno #11
     Both send data to the GPU
     Uniforms
-        Set per draw
+        - Set per draw
     Attributes
-        Set per vertex
+        - Set per vertex
+VERTEX ARRAYS vs VERTEX BUFFERS
+Vetex Arrays 
+    - way to bind vertex buffers with a certain type of specification for that vertex buffer
+    - contains a binding between a vertex buffer and a vertex layout.
+    - Vertex Arrays are Mandatory
+        Core Profile: Does not create Vertex Array automatically
+
 
 
 */
